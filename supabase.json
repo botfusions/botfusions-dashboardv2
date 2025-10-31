@@ -1,0 +1,59 @@
+{
+  "projectId": "qlcbobvbircjhlglhfhr",
+  "api": {
+    "port": 54321,
+    "schemas": [
+      "public",
+      "auth"
+    ],
+    "maxConnections": 20,
+    "restConfig": {
+      "enabled": true,
+      "maxRowsLimit": 1000
+    },
+    "pgConfig": {
+      "extraSearchPath": [
+        "public",
+        "extensions"
+      ]
+    }
+  },
+  "db": {
+    "port": 54322,
+    "majorVersion": 15
+  },
+  "studio": {
+    "enabled": true,
+    "port": 54323
+  },
+  "inbucket": {
+    "enabled": true,
+    "port": 54324,
+    "smtp": {
+      "enabled": true,
+      "host": "localhost",
+      "port": 54325
+    },
+    "pop3": {
+      "enabled": true,
+      "port": 55000
+    }
+  },
+  "functions": [
+    {
+      "id": "chat-handler",
+      "path": "supabase/functions/chat-handler",
+      "env": [
+        "CLAUDE_API_KEY"
+      ]
+    },
+    {
+      "id": "get-dashboard-data",
+      "path": "supabase/functions/get-dashboard-data"
+    },
+    {
+      "id": "send-notification",
+      "path": "supabase/functions/send-notification"
+    }
+  ]
+}

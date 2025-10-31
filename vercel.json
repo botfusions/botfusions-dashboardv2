@@ -1,0 +1,35 @@
+{
+  "projectId": "prj_botfusions_dashboard",
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "dev": {
+    "command": "pnpm dev",
+    "port": 3000
+  },
+  "env": [
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "value": "https://qlcbobvbircjhlglhfhr.supabase.co"
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "value": "@supabase-anon-key"
+    }
+  ],
+  "regions": [
+    "iad1",
+    "fra1"
+  ],
+  "git": {
+    "deploymentEnabled": true,
+    "productionBranch": "main",
+    "cronDeploy": true
+  },
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 60,
+      "memory": 512
+    }
+  }
+}

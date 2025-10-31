@@ -1,0 +1,34 @@
+{
+  "project_id": "qlcbobvbircjhlglhfhr",
+  "url": "https://qlcbobvbircjhlglhfhr.supabase.co",
+  "description": "Botfusions Marketing Dashboard - Supabase Project",
+  "functions": [
+    {
+      "name": "chat-handler",
+      "description": "Handles AI chat requests using Claude API"
+    },
+    {
+      "name": "get-dashboard-data",
+      "description": "Fetches aggregated dashboard metrics and data"
+    },
+    {
+      "name": "send-notification",
+      "description": "Sends notifications via email, Telegram, or webhooks"
+    }
+  ],
+  "tables": [
+    "tenants",
+    "users",
+    "user_tenants",
+    "metrics",
+    "keywords",
+    "competitors",
+    "competitor_snapshots",
+    "chat_history",
+    "notifications",
+    "tenant_settings",
+    "reports",
+    "alerts"
+  ],
+  "rls_enabled": true
+}
