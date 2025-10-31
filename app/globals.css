@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Botfusions Dark Theme - PRD Color Palette */
+:root {
+  /* Background Colors */
+  --bg-primary: #0D0C12;
+  --bg-secondary: #1A1825;
+  --bg-card: #252334;
+  
+  /* Brand Colors */
+  --purple-primary: #7B3FE4;
+  --purple-hover: #9056F7;
+  --blue-primary: #2F89FC;
+  --blue-hover: #4A9FFF;
+  
+  /* Status Colors */
+  --green-success: #4ADE80;
+  --red-danger: #F87171;
+  --yellow-warning: #FBBF24;
+  
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  
+  /* Border & Accents */
+  --border-color: #2E2C3E;
+}
+
+@theme inline {
+  /* Color System */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+  
+  --color-purple-primary: var(--purple-primary);
+  --color-purple-hover: var(--purple-hover);
+  --color-blue-primary: var(--blue-primary);
+  --color-blue-hover: var(--blue-hover);
+  
+  --color-green: var(--green-success);
+  --color-red: var(--red-danger);
+  --color-yellow: var(--yellow-warning);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  
+  --color-border: var(--border-color);
+  
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Styles */
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+small {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--purple-primary);
+}
+
+/* Link Styles */
+a {
+  color: var(--blue-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--blue-hover);
+}
+
+/* Utility Classes */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(123, 63, 228, 0.5);
+}

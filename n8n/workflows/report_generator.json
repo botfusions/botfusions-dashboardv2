@@ -1,0 +1,356 @@
+{
+  "meta": {
+    "instanceId": "botfusions-dashboard-report-generator"
+  },
+  "name": "Botfusions Dashboard Report Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"  // Her Pazartesi saat 09:00
+            }
+          ]
+        },
+        "triggerTimes": {}
+      },
+      "id": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
+      "name": "Weekly Report Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "weekly-report-trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "resource": "database",
+        "operation": "select",
+        "table": "metrics",
+        "columns": "*",
+        "filters": {
+          "conditions": [
+            {
+              "field": "created_at",
+              "operation": "greaterEqual",
+              "value": "={{$now.minus({days: 7}).toISO()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2b3c4d5e-6f7g-8h9i-0j1k-l2m3n4o5p6q7",
+      "name": "Get Metrics Data",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "resource": "database",
+        "operation": "select",
+        "table": "competitors",
+        "columns": "*",
+        "filters": {
+          "conditions": [
+            {
+              "field": "updated_at",
+              "operation": "greaterEqual",
+              "value": "={{$now.minus({days: 7}).toISO()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3c4d5e6f-7g8h-9i0j-1k2l-m3n4o5p6q7r8",
+      "name": "Get Competitors Data",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 320],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "resource": "database",
+        "operation": "select",
+        "table": "keywords",
+        "columns": "*",
+        "filters": {
+          "conditions": [
+            {
+              "field": "last_updated",
+              "operation": "greaterEqual",
+              "value": "={{$now.minus({days: 7}).toISO()}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d5e6f7g-8h9i-0j1k-2l3m-n4o5p6q7r8s9",
+      "name": "Get Keywords Data",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 440],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Supabase'den gelen verileri birleştir\nconst metricsData = $input.all()[0].json || {};\nconst competitorsData = $input.all()[1].json || {};\nconst keywordsData = $input.all()[2].json || {};\n\n// Report için özet veriler hazırla\nconst reportData = {\n  reportDate: new Date().toISOString(),\n  period: 'weekly',\n  summary: {\n    totalMetrics: Array.isArray(metricsData.data) ? metricsData.data.length : 0,\n    totalCompetitors: Array.isArray(competitorsData.data) ? competitorsData.data.length : 0,\n    totalKeywords: Array.isArray(keywordsData.data) ? keywordsData.data.length : 0\n  },\n  data: {\n    metrics: metricsData.data || [],\n    competitors: competitorsData.data || [],\n    keywords: keywordsData.data || []\n  }\n};\n\n// Claude API için prompt hazırla\nconst prompt = `Botfusions Dashboard için haftalık performans raporu analiz et:\n\nVeriler:\n- Metrics: ${JSON.stringify(reportData.data.metrics, null, 2)}\n- Competitors: ${JSON.stringify(reportData.data.competitors, null, 2)}\n- Keywords: ${JSON.stringify(reportData.data.keywords, null, 2)}\n\nLütfen şunları analiz et:\n1. Genel performans trendleri\n2. Rekabet analizi\n3. Anahtar kelime performansı\n4. Öneriler ve aksiyonlar\n\nRaporu HTML formatında hazırla.`;\n\nreturn {\n  reportData: reportData,\n  prompt: prompt,\n  analysisData: {\n    metrics: metricsData,\n    competitors: competitorsData,\n    keywords: keywordsData\n  }\n};"
+      },
+      "id": "5e6f7g8h-9i0j-1k2l-3m4n-o5p6q7r8s9t0",
+      "name": "Prepare Data for Analysis",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "headerAuth",
+        "requestMethod": "POST",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-haiku-20240307\",\n  \"max_tokens\": 4000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.prompt}}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "6f7g8h9i-0j1k-2l3m-4n5o-p6q7r8s9t0u1",
+      "name": "Claude API Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 320],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "claude-api-credentials",
+          "name": "Claude API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Claude API'den gelen analizi HTML raporuna dönüştür\nconst analysisResult = $input.first().json;\nconst reportData = $json.reportData;\n\n// Claude API response'unu parse et\nlet analysis;\ntry {\n  const content = analysisResult.content;\n  if (Array.isArray(content)) {\n    analysis = content.find(item => item.type === 'text')?.text || 'Analiz mevcut değil';\n  } else {\n    analysis = content;\n  }\n} catch (error) {\n  analysis = 'Analiz sırasında hata oluştu: ' + error.message;\n}\n\n// HTML rapor template\nconst htmlReport = `\n<!DOCTYPE html>\n<html lang=\"tr\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Botfusions Dashboard - Haftalık Rapor</title>\n    <style>\n        body {\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 1200px;\n            margin: 0 auto;\n            padding: 20px;\n            background-color: #f5f5f5;\n        }\n        .header {\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: white;\n            padding: 30px;\n            border-radius: 10px;\n            margin-bottom: 30px;\n            text-align: center;\n        }\n        .header h1 {\n            margin: 0;\n            font-size: 2.5em;\n            font-weight: 300;\n        }\n        .header .date {\n            margin-top: 10px;\n            opacity: 0.9;\n            font-size: 1.1em;\n        }\n        .summary {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n            gap: 20px;\n            margin-bottom: 30px;\n        }\n        .metric-card {\n            background: white;\n            padding: 25px;\n            border-radius: 10px;\n            box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n            text-align: center;\n            transition: transform 0.2s;\n        }\n        .metric-card:hover {\n            transform: translateY(-2px);\n        }\n        .metric-card h3 {\n            margin: 0 0 15px 0;\n            color: #667eea;\n            font-size: 1.3em;\n        }\n        .metric-card .number {\n            font-size: 2.5em;\n            font-weight: bold;\n            color: #333;\n        }\n        .analysis {\n            background: white;\n            padding: 30px;\n            border-radius: 10px;\n            box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n            margin-bottom: 30px;\n        }\n        .analysis h2 {\n            color: #667eea;\n            border-bottom: 2px solid #667eea;\n            padding-bottom: 10px;\n            margin-bottom: 20px;\n        }\n        .recommendations {\n            background: white;\n            padding: 30px;\n            border-radius: 10px;\n            box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n        }\n        .recommendations h2 {\n            color: #764ba2;\n            border-bottom: 2px solid #764ba2;\n            padding-bottom: 10px;\n            margin-bottom: 20px;\n        }\n        .footer {\n            text-align: center;\n            margin-top: 40px;\n            padding: 20px;\n            background: #f8f9fa;\n            border-radius: 10px;\n            color: #666;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"header\">\n        <h1>Botfusions Dashboard</h1>\n        <div class=\"date\">Haftalık Performans Raporu - {{new Date().toLocaleDateString('tr-TR')}}</div>\n    </div>\n    \n    <div class=\"summary\">\n        <div class=\"metric-card\">\n            <h3>Toplanan Metrics</h3>\n            <div class=\"number\">${reportData.summary.totalMetrics}</div>\n        </div>\n        <div class=\"metric-card\">\n            <h3>Rakip Analizi</h3>\n            <div class=\"number\">${reportData.summary.totalCompetitors}</div>\n        </div>\n        <div class=\"metric-card\">\n            <h3>Anahtar Kelimeler</h3>\n            <div class=\"number\">${reportData.summary.totalKeywords}</div>\n        </div>\n    </div>\n    \n    <div class=\"analysis\">\n        <h2>📊 Performans Analizi</h2>\n        <div>${analysis.replace(/\\n/g, '<br>')}</div>\n    </div>\n    \n    <div class=\"footer\">\n        <p>Botfusions Dashboard Raporu | Otomatik olarak oluşturulmuştur</p>\n        <p>Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}</p>\n    </div>\n</body>\n</html>\n`;\n\n// Report metadata\nconst reportMetadata = {\n  id: 'report-' + Date.now(),\n  title: `Haftalık Performans Raporu - ${new Date().toLocaleDateString('tr-TR')}`,\n  period: 'weekly',\n  generatedAt: new Date().toISOString(),\n  summary: reportData.summary\n};\n\nreturn {\n  htmlReport: htmlReport,\n  metadata: reportMetadata,\n  analysis: analysis,\n  reportData: reportData\n};"
+      },
+      "id": "7g8h9i0j-1k2l-3m4n-5o6p-q7r8s9t0u1v2",
+      "name": "Generate HTML Report",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 320]
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "table": "reports",
+        "columns": "id,title,content,metadata,period,generated_at,summary",
+        "values": {
+          "id": "={{$json.metadata.id}}",
+          "title": "={{$json.metadata.title}}",
+          "content": "={{$json.htmlReport}}",
+          "metadata": "={{JSON.stringify($json.metadata)}}",
+          "period": "weekly",
+          "generated_at": "={{$json.metadata.generatedAt}}",
+          "summary": "={{JSON.stringify($json.metadata.summary)}}"
+        },
+        "options": {}
+      },
+      "id": "8h9i0j1k-2l3m-4n5o-6p7q-r8s9t0u1v2w3",
+      "name": "Save Report to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1340, 240],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "reports@botfusions.com",
+        "toEmail": "={{$vars.REPORT_RECIPIENTS || 'admin@botfusions.com'}}",
+        "subject": "Botfusions Dashboard - Haftalık Performans Raporu",
+        "emailFormat": "html",
+        "message": "Merhaba,\n\nBotfusions Dashboard için hazırlanan haftalık performans raporu ektedir.\n\nRapor özeti:\n- Toplanan Metrics: {{$('Generate HTML Report').item.json.metadata.summary.totalMetrics}}\n- Rakip Analizi: {{$('Generate HTML Report').item.json.metadata.summary.totalCompetitors}}\n- Anahtar Kelimeler: {{$('Generate HTML Report').item.json.metadata.summary.totalKeywords}}\n\nDetaylar için dashboard'u ziyaret edebilirsiniz.\n\nİyi çalışmalar,\nBotfusions Dashboard",
+        "options": {
+          "attachments": "htmlReport"
+        }
+      },
+      "id": "9i0j1k2l-3m4n-5o6p-7q8r-s9t0u1v2w3x4",
+      "name": "Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1340, 400],
+      "credentials": {
+        "smtp": {
+          "id": "email-credentials",
+          "name": "SMTP Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Final report summary\nconst reportData = $('Generate HTML Report').item.json;\nconst savedReport = $('Save Report to Supabase').item.json;\n\nconst summary = {\n  reportId: reportData.metadata.id,\n  title: reportData.metadata.title,\n  period: reportData.metadata.period,\n  generatedAt: reportData.metadata.generatedAt,\n  savedToDatabase: !!savedReport.data,\n  metricsAnalyzed: reportData.metadata.summary.totalMetrics,\n  competitorsAnalyzed: reportData.metadata.summary.totalCompetitors,\n  keywordsAnalyzed: reportData.metadata.summary.totalKeywords,\n  reportLength: reportData.htmlReport.length,\n  analysisCompleted: true\n};\n\nreturn summary;"
+      },
+      "id": "0j1k2l3m-4n5o-6p7q-8r9s-t0u1v2w3x4y5",
+      "name": "Report Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1560, 320]
+    }
+  ],
+  "connections": {
+    "Weekly Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Metrics Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Competitors Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Keywords Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Metrics Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data for Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Competitors Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data for Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Keywords Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data for Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data for Analysis": {
+      "main": [
+        [
+          {
+            "node": "Claude API Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API Analysis": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Save Report to Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Report to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Report Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-11-01T03:09:05.000Z",
+      "updatedAt": "2025-11-01T03:09:05.000Z",
+      "id": "botfusions-reporting",
+      "name": "Botfusions Reporting"
+    },
+    {
+      "createdAt": "2025-11-01T03:09:05.000Z",
+      "updatedAt": "2025-11-01T03:09:05.000Z",
+      "id": "weekly-reports",
+      "name": "Weekly Reports"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-01T03:09:05.000Z",
+  "versionId": "1"
+}

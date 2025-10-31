@@ -1,0 +1,446 @@
+{
+  "name": "Competitor Monitor Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "f7b2c4a1-8e5d-4f2a-9b3c-7d6e1f2a3b4c",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "competitors",
+        "columns": "id,name,url,scraping_selectors,last_checked",
+        "options": {}
+      },
+      "id": "a1b2c3d4-5e6f-4g7h-8i9j-0k1l2m3n4o5p",
+      "name": "Get Competitors List",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b2c3d4e5-6f7g-8h9i-0j1k2l3m4n5o6p7q",
+      "name": "Split Into Items",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 30000,
+          "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+          }
+        }
+      },
+      "id": "c3d4e5f6-7g8h-9i0j-1k2l3m4n5o6p7q8r",
+      "name": "Scrape Competitor Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract price, stock and campaign data from scraped content\nconst responseData = $input.all();\nconst competitor = $input.first();\nconst content = responseData[0].json.data;\nconst selectors = competitor.json.scraping_selectors;\n\nlet extractedData = {\n  competitor_id: competitor.json.id,\n  name: competitor.json.name,\n  url: competitor.json.url,\n  timestamp: new Date().toISOString()\n};\n\ntry {\n  // Parse selectors JSON\n  const selectorConfig = JSON.parse(selectors || '{}');\n  \n  // Extract price using selector\n  if (selectorConfig.price_selector) {\n    const priceRegex = new RegExp(selectorConfig.price_selector, 'gi');\n    const priceMatch = content.match(priceRegex);\n    extractedData.price = priceMatch ? priceMatch[0].replace(/[^\\d.,]/g, '') : null;\n  }\n  \n  // Extract stock status\n  if (selectorConfig.stock_selector) {\n    const stockRegex = new RegExp(selectorConfig.stock_selector, 'gi');\n    const stockMatch = content.match(stockRegex);\n    extractedData.stock_status = stockMatch ? stockMatch[0].toLowerCase().includes('stokta') || stockMatch[0].toLowerCase().includes('available') : null;\n  }\n  \n  // Extract campaign/promotion\n  if (selectorConfig.campaign_selector) {\n    const campaignRegex = new RegExp(selectorConfig.campaign_selector, 'gi');\n    const campaignMatch = content.match(campaignRegex);\n    extractedData.campaign = campaignMatch ? campaignMatch[0] : null;\n  }\n  \n  // Add raw content for debugging\n  extractedData.raw_content = content.substring(0, 1000);\n  \n} catch (error) {\n  extractedData.error = error.message;\n}\n\n// Set last_checked timestamp\nextractedData.last_checked = new Date().toISOString();\n\nreturn { json: extractedData };"
+      },
+      "id": "d4e5f6g7-8h9i-0j1k-2l3m4n5o6p7q8r9s",
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "competitor_data",
+        "columns": "competitor_id,name,url,price,stock_status,campaign,timestamp,last_checked",
+        "options": {}
+      },
+      "id": "e5f6g7h8-9i0j-1k2l-3m4n5o6p7q8r9s0t",
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "competitor_data",
+        "columns": "id,competitor_id,price,timestamp",
+        "filterType": "customSql",
+        "customSql": "WHERE competitor_id = {{ $json.competitor_id }} AND timestamp > NOW() - INTERVAL '7 days' ORDER BY timestamp DESC LIMIT 1",
+        "options": {}
+      },
+      "id": "f6g7h8i9-0j1k-2l3m-4n5o6p7q8r9s0t1u",
+      "name": "Check Price Changes",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check for significant price changes\nconst currentData = $input.first();\nconst previousData = $input.all()[1];\n\nif (!previousData || !previousData.json.price) {\n  return { json: { alert: false, message: 'No previous data' } };\n}\n\nconst currentPrice = parseFloat(currentData.json.price?.replace(/[^\\d.,]/g, '').replace(',', '.')) || 0;\nconst previousPrice = parseFloat(previousData.json.price?.replace(/[^\\d.,]/g, '').replace(',', '.')) || 0;\n\nconst priceChange = Math.abs(currentPrice - previousPrice);\nconst priceChangePercent = previousPrice > 0 ? (priceChange / previousPrice) * 100 : 0;\n\n// Alert if price change is more than 5%\nconst alert = priceChangePercent > 5;\n\nconst alertData = {\n  alert: alert,\n  competitor_id: currentData.json.competitor_id,\n  name: currentData.json.name,\n  current_price: currentPrice,\n  previous_price: previousPrice,\n  price_change: priceChange,\n  price_change_percent: priceChangePercent.toFixed(2),\n  timestamp: currentData.json.timestamp\n};\n\nif (alert) {\n  alertData.message = `⚠️ Fiyat Değişikliği Alert: ${currentData.json.name} - Fiyat %${priceChangePercent.toFixed(2)} değişti (${previousPrice} → ${currentPrice})`;\n}\n\nreturn { json: alertData };"
+      },
+      "id": "g7h8i9j0-1k2l-3m4n-5o6p7q8r9s0t1u2v",
+      "name": "Price Change Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.alert }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "h8i9j0k1-2l3m-4n5o-6p7q8r9s0t1u2v3w",
+      "name": "Send Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "from": "competitor-monitor@botfusions.com",
+        "toEmail": "alerts@botfusions.com",
+        "subject": "⚠️ Rakip Fiyat Değişikliği Alert",
+        "messageType": "html",
+        "message": "=Fiyat değişikliği tespit edildi:\\n\\n{{ $json.message }}\\n\\nDetaylar:\\n- Rakip: {{ $json.name }}\\n- Güncel Fiyat: {{ $json.current_price }} ₺\\n- Önceki Fiyat: {{ $json.previous_price }} ₺\\n- Değişim: %{{ $json.price_change_percent }}\\n- Tarih: {{ $json.timestamp }}\\n\\nDashboard'ta detayları görüntülemek için: https://dashboard.botfusions.com"
+      },
+      "id": "i9j0k1l2-3m4n-5o6p-7q8r9s0t1u2v3w4x",
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        100
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "smtp_credentials",
+          "name": "Botfusions SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "competitor_data",
+        "columns": "competitor_id,name,price,stock_status,campaign,timestamp",
+        "filterType": "customSql",
+        "customSql": "WHERE DATE(timestamp) = CURRENT_DATE ORDER BY competitor_id, timestamp DESC",
+        "options": {}
+      },
+      "id": "j0k1l2m3-4n5o-6p7q-8r9s0t1u2v3w4x5y",
+      "name": "Get Daily Data",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate daily report\nconst data = $input.all();\nconst reportDate = new Date().toISOString().split('T')[0];\n\n// Group data by competitor\nconst competitorData = {};\ndata.forEach(item => {\n  const competitorId = item.json.competitor_id;\n  if (!competitorData[competitorId]) {\n    competitorData[competitorId] = {\n      name: item.json.name,\n      records: []\n    };\n  }\n  competitorData[competitorId].records.push(item.json);\n});\n\n// Generate HTML report\nlet reportHtml = `\n<!DOCTYPE html>\n<html>\n<head>\n    <title>Günlük Rakip İzleme Raporu - ${reportDate}</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 20px; }\n        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 5px; }\n        .competitor { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }\n        .price-change { color: #e74c3c; font-weight: bold; }\n        .in-stock { color: #27ae60; }\n        .out-of-stock { color: #e74c3c; }\n        table { width: 100%; border-collapse: collapse; margin-top: 10px; }\n        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }\n        th { background-color: #f2f2f2; }\n    </style>\n</head>\n<body>\n    <div class=\"header\">\n        <h1>📊 Günlük Rakip İzleme Raporu</h1>\n        <p>Tarih: ${reportDate}</p>\n        <p>Botfusions Dashboard</p>\n    </div>\n`;\n\n// Add competitor sections\nObject.keys(competitorData).forEach(competitorId => {\n  const comp = competitorData[competitorId];\n  const latest = comp.records[0];\n  \n  reportHtml += `\n    <div class=\"competitor\">\n        <h2>${comp.name}</h2>\n        <table>\n            <tr>\n                <th>Zaman</th>\n                <th>Fiyat</th>\n                <th>Stok Durumu</th>\n                <th>Kampanya</th>\n            </tr>\n  `;\n  \n  comp.records.forEach(record => {\n    const time = new Date(record.timestamp).toLocaleTimeString('tr-TR');\n    const stockClass = record.stock_status ? 'in-stock' : 'out-of-stock';\n    const stockText = record.stock_status ? 'Stokta' : 'Stokta Yok';\n    \n    reportHtml += `\n            <tr>\n                <td>${time}</td>\n                <td>${record.price || 'Belirsiz'} ₺</td>\n                <td class=\"${stockClass}\">${stockText}</td>\n                <td>${record.campaign || 'Yok'}</td>\n            </tr>\n    `;\n  });\n  \n  reportHtml += `\n        </table>\n    </div>\n  `;\n});\n\nreportHtml += `\n</body>\n</html>\n`;\n\n// Generate summary statistics\nconst totalCompetitors = Object.keys(competitorData).length;\nconst activeCompetitors = Object.values(competitorData).filter(comp => \n  comp.records.some(r => r.price && r.price !== 'Belirsiz')\n).length;\nconst inStockCompetitors = Object.values(competitorData).filter(comp => \n  comp.records.some(r => r.stock_status)\n).length;\n\n// Add summary\nreportHtml = reportHtml.replace('</body>', `\n    <div class=\"header\" style=\"margin-top: 30px;\">\n        <h2>📈 Özet İstatistikler</h2>\n        <p><strong>Toplam Rakip:</strong> ${totalCompetitors}</p>\n        <p><strong>Aktif Rakip (Fiyat Var):</strong> ${activeCompetitors}</p>\n        <p><strong>Stokta Olan:</strong> ${inStockCompetitors}</p>\n        <p><strong>Rapor Oluşturma Zamanı:</strong> ${new Date().toLocaleString('tr-TR')}</p>\n    </div>\n</body>\n`);\n\nconst report = {\n  date: reportDate,\n  html_content: reportHtml,\n  total_competitors: totalCompetitors,\n  active_competitors: activeCompetitors,\n  in_stock_competitors: inStockCompetitors,\n  generated_at: new Date().toISOString()\n};\n\nreturn { json: report };"
+      },
+      "id": "k1l2m3n4-5o6p-7q8r-9s0t1u2v3w4x5y6z",
+      "name": "Generate Daily Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "daily_reports",
+        "columns": "report_date,html_content,total_competitors,active_competitors,in_stock_competitors,generated_at",
+        "options": {}
+      },
+      "id": "l2m3n4o5-6p7q-8r9s-0t1u2v3w4x5y6z7a",
+      "name": "Save Report",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Botfusions Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "from": "reports@botfusions.com",
+        "toEmail": "management@botfusions.com",
+        "subject": "📊 Günlük Rakip İzleme Raporu - {{ $json.date }}",
+        "messageType": "html",
+        "message": "={{ $json.html_content }}"
+      },
+      "id": "m3n4o5p6-7q8r-9s0t-1u2v3w4x5y6z7a8b",
+      "name": "Send Daily Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "smtp_credentials",
+          "name": "Botfusions SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Competitors List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Competitors List": {
+      "main": [
+        [
+          {
+            "node": "Split Into Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Items": {
+      "main": [
+        [
+          {
+            "node": "Scrape Competitor Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Competitor Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Check Price Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Price Changes": {
+      "main": [
+        [
+          {
+            "node": "Price Change Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price Change Analysis": {
+      "main": [
+        [
+          {
+            "node": "Send Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Alert?": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Daily Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Daily Report": {
+      "main": [
+        [
+          {
+            "node": "Save Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Report": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "createdAt": "2025-11-01T03:09:05.000Z",
+      "updatedAt": "2025-11-01T03:09:05.000Z",
+      "id": "competitor-monitor",
+      "name": "Competitor Monitor"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-01T03:09:05.000Z",
+  "versionId": "1"
+}

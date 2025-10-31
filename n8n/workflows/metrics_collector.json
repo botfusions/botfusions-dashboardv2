@@ -1,0 +1,588 @@
+{
+  "name": "Botfusions Dashboard - Metrics Collector",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "cronExpression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Hourly Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "hourly-metrics-cron"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Saati ve tarihi al\nconst now = new Date();\nconst currentHour = now.getHours();\nconst currentDate = now.toISOString().split('T')[0];\nconst tenantId = '00000000-0000-0000-0000-000000000000'; // Default tenant ID\n\n// Haftalık/aylık kontrolü\nconst dayOfWeek = now.getDay(); // 0 = Pazar, 1 = Pazartesi, vb.\nconst dayOfMonth = now.getDate();\nconst isWeekly = dayOfWeek === 1; // Her Pazartesi\nconst isMonthly = dayOfMonth === 1; // Her Ayın 1'i\n\n// Metrik verilerini oluştur\nconst metrics = [\n  {\n    tenant_id: tenantId,\n    metric_type: 'website_traffic',\n    metric_value: Math.floor(Math.random() * 500) + 100, // 100-600 arası rastgele\n    period_type: 'daily',\n    period_start: currentDate,\n    period_end: currentDate,\n    metadata: {\n      timestamp: now.toISOString(),\n      page_views: Math.floor(Math.random() * 1000) + 500,\n      unique_visitors: Math.floor(Math.random() * 300) + 150,\n      bounce_rate: (Math.random() * 0.4 + 0.2).toFixed(2)\n    }\n  },\n  {\n    tenant_id: tenantId,\n    metric_type: 'chatbot_usage',\n    metric_value: Math.floor(Math.random() * 50) + 10, // 10-60 arası\n    period_type: 'daily',\n    period_start: currentDate,\n    period_end: currentDate,\n    metadata: {\n      timestamp: now.toISOString(),\n      total_conversations: Math.floor(Math.random() * 100) + 20,\n      active_sessions: Math.floor(Math.random() * 25) + 5,\n      avg_session_duration: Math.floor(Math.random() * 300) + 60,\n      satisfaction_score: (Math.random() * 2 + 3).toFixed(1) // 3.0-5.0 arası\n    }\n  },\n  {\n    tenant_id: tenantId,\n    metric_type: 'keyword_performance',\n    metric_value: Math.floor(Math.random() * 100) + 50, // 50-150 arası\n    period_type: 'daily',\n    period_start: currentDate,\n    period_end: currentDate,\n    metadata: {\n      timestamp: now.toISOString(),\n      top_keywords: [\n        { keyword: 'chatbot', clicks: Math.floor(Math.random() * 100) },\n        { keyword: 'automation', clicks: Math.floor(Math.random() * 80) },\n        { keyword: 'ai', clicks: Math.floor(Math.random() * 120) }\n      ],\n      total_impressions: Math.floor(Math.random() * 5000) + 1000,\n      total_clicks: Math.floor(Math.random() * 500) + 100,\n      ctr: (Math.random() * 0.1 + 0.05).toFixed(3)\n    }\n  }\n];\n\n// Haftalık metrikler ekle\nif (isWeekly) {\n  metrics.push(\n    {\n      tenant_id: tenantId,\n      metric_type: 'weekly_summary',\n      metric_value: Math.floor(Math.random() * 10000) + 5000,\n      period_type: 'weekly',\n      period_start: currentDate,\n      period_end: currentDate,\n      metadata: {\n        timestamp: now.toISOString(),\n        total_weekly_traffic: Math.floor(Math.random() * 5000) + 2000,\n        total_conversations: Math.floor(Math.random() * 1000) + 500,\n        avg_response_time: (Math.random() * 2 + 1).toFixed(2),\n        user_satisfaction: (Math.random() * 1 + 4).toFixed(1)\n      }\n    }\n  );\n}\n\n// Aylık metrikler ekle\nif (isMonthly) {\n  metrics.push(\n    {\n      tenant_id: tenantId,\n      metric_type: 'monthly_summary',\n      metric_value: Math.floor(Math.random() * 50000) + 20000,\n      period_type: 'monthly',\n      period_start: currentDate,\n      period_end: currentDate,\n      metadata: {\n        timestamp: now.toISOString(),\n        monthly_revenue: Math.floor(Math.random() * 10000) + 5000,\n        customer_acquisition: Math.floor(Math.random() * 200) + 100,\n        churn_rate: (Math.random() * 0.1 + 0.05).toFixed(3),\n        growth_rate: (Math.random() * 0.3 + 0.1).toFixed(2)\n      }\n    }\n  );\n}\n\nreturn [{ json: { metrics, timestamp: now.toISOString() } }];"
+      },
+      "id": "generate-metrics",
+      "name": "Generate Metrics Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "webhookId": "generate-metrics"
+    },
+    {
+      "parameters": {
+        "url": "https://qlcbobvbircjhlglhfhr.supabase.co/rest/v1/metrics",
+        "authentication": "headerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MzM5NjgsImV4cCI6MjA3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MzM5NjgsImV4cCI6MjA3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "value": "={{ $json.metrics[0].tenant_id }}"
+            },
+            {
+              "name": "metric_type",
+              "value": "={{ $json.metrics[0].metric_type }}"
+            },
+            {
+              "name": "metric_value",
+              "value": "={{ $json.metrics[0].metric_value }}"
+            },
+            {
+              "name": "period_type",
+              "value": "={{ $json.metrics[0].period_type }}"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $json.metrics[0].period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $json.metrics[0].period_end }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.metrics[0].metadata) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert-website-traffic",
+      "name": "Insert Website Traffic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 160],
+      "webhookId": "insert-website-traffic"
+    },
+    {
+      "parameters": {
+        "url": "https://qlcbobvbircjhlglhfhr.supabase.co/rest/v1/metrics",
+        "authentication": "headerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MzM5NjgsImV4cCI6MjA3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MzM5NjgsImV4cCI6MjA3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "value": "={{ $json.metrics[1].tenant_id }}"
+            },
+            {
+              "name": "metric_type",
+              "value": "={{ $json.metrics[1].metric_type }}"
+            },
+            {
+              "name": "metric_value",
+              "value": "={{ $json.metrics[1].metric_value }}"
+            },
+            {
+              "name": "period_type",
+              "value": "={{ $json.metrics[1].period_type }}"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $json.metrics[1].period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $json.metrics[1].period_end }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.metrics[1].metadata) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert-chatbot-usage",
+      "name": "Insert Chatbot Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 260],
+      "webhookId": "insert-chatbot-usage"
+    },
+    {
+      "parameters": {
+        "url": "https://qlcbobvbircjhlglhfhr.supabase.co/rest/v1/metrics",
+        "authentication": "headerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "value": "={{ $json.metrics[2].tenant_id }}"
+            },
+            {
+              "name": "metric_type",
+              "value": "={{ $json.metrics[2].metric_type }}"
+            },
+            {
+              "name": "metric_value",
+              "value": "={{ $json.metrics[2].metric_value }}"
+            },
+            {
+              "name": "period_type",
+              "value": "={{ $json.metrics[2].period_type }}"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $json.metrics[2].period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $json.metrics[2].period_end }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.metrics[2].metadata) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert-keyword-performance",
+      "name": "Insert Keyword Performance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 360],
+      "webhookId": "insert-keyword-performance"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.metrics.length }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-weekly-monthly",
+      "name": "Check Weekly/Monthly",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "webhookId": "check-weekly-monthly"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.metrics[3].metric_type }}",
+              "rightValue": "weekly_summary",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "is-weekly",
+      "name": "Is Weekly Metric",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 200],
+      "webhookId": "is-weekly-metric"
+    },
+    {
+      "parameters": {
+        "url": "https://qlcbobvbircjhlglhfhr.supabase.co/rest/v1/metrics",
+        "authentication": "headerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "value": "={{ $json.metrics[3].tenant_id }}"
+            },
+            {
+              "name": "metric_type",
+              "value": "={{ $json.metrics[3].metric_type }}"
+            },
+            {
+              "name": "metric_value",
+              "value": "={{ $json.metrics[3].metric_value }}"
+            },
+            {
+              "name": "period_type",
+              "value": "={{ $json.metrics[3].period_type }}"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $json.metrics[3].period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $json.metrics[3].period_end }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.metrics[3].metadata) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert-weekly-summary",
+      "name": "Insert Weekly Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 160],
+      "webhookId": "insert-weekly-summary"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.metrics[4].metric_type }}",
+              "rightValue": "monthly_summary",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "is-monthly",
+      "name": "Is Monthly Metric",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 400],
+      "webhookId": "is-monthly-metric"
+    },
+    {
+      "parameters": {
+        "url": "https://qlcbobvbircjhlglhfhr.supabase.co/rest/v1/metrics",
+        "authentication": "headerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "value": "={{ $json.metrics[4].tenant_id }}"
+            },
+            {
+              "name": "metric_type",
+              "value": "={{ $json.metrics[4].metric_type }}"
+            },
+            {
+              "name": "metric_value",
+              "value": "={{ $json.metrics[4].metric_value }}"
+            },
+            {
+              "name": "period_type",
+              "value": "={{ $json.metrics[4].period_type }}"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $json.metrics[4].period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $json.metrics[4].period_end }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.metrics[4].metadata) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert-monthly-summary",
+      "name": "Insert Monthly Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 440],
+      "webhookId": "insert-monthly-summary"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Metrics collected and saved successfully at {{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "webhookId": "success-response"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Error occurred: {{ $json.error.message || 'Unknown error' }}",
+        "options": {}
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 460],
+      "webhookId": "error-response"
+    }
+  ],
+  "connections": {
+    "Hourly Cron": {
+      "main": [
+        [
+          {
+            "node": "Generate Metrics Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Metrics Data": {
+      "main": [
+        [
+          {
+            "node": "Insert Website Traffic",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert Chatbot Usage",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert Keyword Performance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Website Traffic": {
+      "main": [
+        [
+          {
+            "node": "Check Weekly/Monthly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Chatbot Usage": {
+      "main": [
+        [
+          {
+            "node": "Check Weekly/Monthly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Keyword Performance": {
+      "main": [
+        [
+          {
+            "node": "Check Weekly/Monthly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Weekly/Monthly": {
+      "main": [
+        [
+          {
+            "node": "Is Weekly Metric",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Monthly Metric",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Weekly Metric": {
+      "main": [
+        [
+          {
+            "node": "Insert Weekly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Insert Weekly Summary": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Monthly Metric": {
+      "main": [
+        [
+          {
+            "node": "Insert Monthly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Insert Monthly Summary": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "description": "Botfusions Dashboard Metrics Collector Workflow - Collects website traffic, chatbot usage, and keyword performance metrics hourly with weekly/monthly summaries"
+  }
+}

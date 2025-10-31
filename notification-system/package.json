@@ -1,0 +1,49 @@
+{
+  "name": "botfusions-telegram-notification-system",
+  "version": "1.0.0",
+  "description": "Botfusions Dashboard için kapsamlı Telegram Bot bildirim sistemi",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "setup-webhook": "node scripts/setup-webhook.js",
+    "send-test-message": "node scripts/send-test-message.js",
+    "validate-config": "node scripts/validate-config.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "notifications",
+    "dashboard",
+    "botfusions",
+    "n8n",
+    "webhook"
+  ],
+  "author": "Botfusions Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/botfusions/telegram-notification-system.git"
+  },
+  "bugs": {
+    "url": "https://github.com/botfusions/telegram-notification-system/issues"
+  },
+  "homepage": "https://github.com/botfusions/telegram-notification-system#readme"
+}

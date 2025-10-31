@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botfusions Dashboard Email Templates</title>
+    <style>
+        /* Reset ve base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        /* Container styles */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* Header styles */
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        .logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        /* Content styles */
+        .email-content {
+            padding: 40px;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .message {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        /* Button styles */
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 20px 0;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Card styles */
+        .card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        /* List styles */
+        .feature-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        /* Stats styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        /* Alert styles */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        .alert-info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .alert-warning {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .alert-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .alert-error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+        
+        /* Table styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 14px;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .data-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* Footer styles */
+        .email-footer {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        .footer-links {
+            margin: 20px 0;
+        }
+        
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #95a5a6;
+            line-height: 1.5;
+        }
+        
+        /* Responsive design */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 0;
+            }
+            
+            .email-header,
+            .email-content,
+            .email-footer {
+                padding: 20px;
+            }
+            
+            .greeting {
+                font-size: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .cta-button {
+                display: block;
+                text-align: center;
+                margin: 15px 0;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            .email-container {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            
+            .cta-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Welcome Email Template -->
+<div class="email-container" id="welcome-template" style="display: none;">
+    <div class="email-header">
+        <img src="{{logo.url}}" alt="{{logo.alt}}" class="logo">
+        <h1 class="company-name">{{company.name}}</h1>
+        <p>Hoş Geldiniz!</p>
+    </div>
+    
+    <div class="email-content">
+        <h2 class="greeting">Merhaba {{user.name}}!</h2>
+        
+        <div class="message">
+            Botfusions Dashboard'a hoş geldiniz! Hesabınız başarıyla oluşturuldu ve artık tüm özelliklerden yararlanabilirsiniz.
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Dashboard Özellikleri</h3>
+            <ul class="feature-list">
+                <li>Gerçek zamanlı veri analizi</li>
+                <li>Özelleştirilebilir raporlar</li>
+                <li>Gelişmiş bildirim sistemi</li>
+                <li>Kullanıcı dostu arayüz</li>
+                <li>Güvenli veri yönetimi</li>
+            </ul>
+        </div>
+        
+        <a href="{{dashboard_url}}" class="cta-button">Dashboard'a Git</a>
+        
+        <div class="alert alert-info">
+            <strong>İpucu:</strong> Dashboard'unuzda gezinmeye başlamak için yardım bölümünü ziyaret edebilirsiniz.
+        </div>
+        
+        <div class="message">
+            Herhangi bir sorunuz olursa, lütfen destek ekibimizle iletişime geçmekten çekinmeyin.
+        </div>
+    </div>
+    
+    <div class="email-footer">
+        <div class="footer-links">
+            <a href="{{company.url}}">Website</a>
+            <a href="{{support_url}}">Destek</a>
+            <a href="{{privacy_url}}">Gizlilik</a>
+            <a href="{{terms_url}}">Şartlar</a>
+        </div>
+        <div class="footer-text">
+            {{company.name}} © {{currentYear}}<br>
+            {{company.address}}
+        </div>
+    </div>
+</div>
+
+<!-- Alert Email Template -->
+<div class="email-container" id="alert-template" style="display: none;">
+    <div class="email-header">
+        <img src="{{logo.url}}" alt="{{logo.alt}}" class="logo">
+        <h1 class="company-name">{{company.name}}</h1>
+        <p>⚠️ Önemli Bildirim</p>
+    </div>
+    
+    <div class="email-content">
+        <h2 class="greeting">Merhaba {{user.name}},</h2>
+        
+        <div class="alert alert-{{alert_type}}">
+            <strong>{{alert_title}}</strong><br>
+            {{alert_message}}
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Bildirim Detayları</h3>
+            <p><strong>Zaman:</strong> {{currentDate}} {{currentTime}}</p>
+            <p><strong>Öncelik:</strong> {{alert_priority}}</p>
+            {{#if alert_action_required}}
+            <p><strong>Gerekli Aksiyon:</strong> {{alert_action_required}}</p>
+            {{/if}}
+        </div>
+        
+        {{#if alert_data}}
+        <div class="card">
+            <h3 class="card-title">İlgili Veriler</h3>
+            <div class="alert-data">
+                {{alert_data}}
+            </div>
+        </div>
+        {{/if}}
+        
+        {{#if action_url}}
+        <a href="{{action_url}}" class="cta-button">Detayları Görüntüle</a>
+        {{/if}}
+        
+        <div class="message">
+            Bu bildirim otomatik olarak gönderilmiştir. Acil durumlar için lütfen doğrudan destek ekibimizle iletişime geçin.
+        </div>
+    </div>
+    
+    <div class="email-footer">
+        <div class="footer-links">
+            <a href="{{dashboard_url}}">Dashboard</a>
+            <a href="{{support_url}}">Destek</a>
+            <a href="{{unsubscribe_url}}">Bildirimleri Yönet</a>
+        </div>
+        <div class="footer-text">
+            {{company.name}} © {{currentYear}}<br>
+            Bu emaili almak istemiyorsanız <a href="{{unsubscribe_url}}" style="color: #bdc3c7;">abonelikten çıkabilirsiniz</a>.
+        </div>
+    </div>
+</div>
+
+<!-- Report Email Template -->
+<div class="email-container" id="report-template" style="display: none;">
+    <div class="email-header">
+        <img src="{{logo.url}}" alt="{{logo.alt}}" class="logo">
+        <h1 class="company-name">{{company.name}}</h1>
+        <p>📊 {{report_title}}</p>
+    </div>
+    
+    <div class="email-content">
+        <h2 class="greeting">Merhaba {{user.name}},</h2>
+        
+        <div class="message">
+            {{report_description}}
+        </div>
+        
+        <div class="stats-grid">
+            {{#each report_stats}}
+            <div class="stat-item">
+                <span class="stat-number">{{this.value}}</span>
+                <div class="stat-label">{{this.label}}</div>
+            </div>
+            {{/each}}
+        </div>
+        
+        {{#if report_chart}}
+        <div class="card">
+            <h3 class="card-title">Görsel Analiz</h3>
+            <div class="chart-container">
+                <!-- Chart will be inserted here -->
+            </div>
+        </div>
+        {{/if}}
+        
+        {{#if report_table}}
+        <div class="card">
+            <h3 class="card-title">{{table_title}}</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        {{#each report_table.headers}}
+                        <th>{{this}}</th>
+                        {{/each}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each report_table.rows}}
+                    <tr>
+                        {{#each this}}
+                        <td>{{this}}</td>
+                        {{/each}}
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        {{/if}}
+        
+        {{#if report_insights}}
+        <div class="card">
+            <h3 class="card-title">Önemli Bulgular</h3>
+            <div class="insights">
+                {{report_insights}}
+            </div>
+        </div>
+        {{/if}}
+        
+        <a href="{{report_url}}" class="cta-button">Tam Raporu Görüntüle</a>
+        
+        <div class="alert alert-info">
+            <strong>Bilgi:</strong> Bu rapor {{report_period}} dönemini kapsamaktadır ve {{currentDate}} tarihinde oluşturulmuştur.
+        </div>
+    </div>
+    
+    <div class="email-footer">
+        <div class="footer-links">
+            <a href="{{dashboard_url}}">Dashboard</a>
+            <a href="{{report_url}}">Raporlar</a>
+            <a href="{{settings_url}}">Ayarlar</a>
+        </div>
+        <div class="footer-text">
+            {{company.name}} © {{currentYear}}<br>
+            Otomatik rapor gönderimi. Rapor sıklığını ayarlardan değiştirebilirsiniz.
+        </div>
+    </div>
+</div>
+
+<!-- Digest Email Template -->
+<div class="email-container" id="digest-template" style="display: none;">
+    <div class="email-header">
+        <img src="{{logo.url}}" alt="{{logo.alt}}" class="logo">
+        <h1 class="company-name">{{company.name}}</h1>
+        <p>📬 Haftalık Özet</p>
+    </div>
+    
+    <div class="email-content">
+        <h2 class="greeting">Merhaba {{user.name}},</h2>
+        
+        <div class="message">
+            İşte geçen hafta {{company.name}} Dashboard'unuzda yaşananlar:
+        </div>
+        
+        {{#if digest_summary}}
+        <div class="card">
+            <h3 class="card-title">Haftalık Özet</h3>
+            <div class="stats-grid">
+                {{#each digest_summary}}
+                <div class="stat-item">
+                    <span class="stat-number">{{this.value}}</span>
+                    <div class="stat-label">{{this.label}}</div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+        
+        {{#if recent_activities}}
+        <div class="card">
+            <h3 class="card-title">Son Aktiviteler</h3>
+            <ul class="feature-list">
+                {{#each recent_activities}}
+                <li>{{this.description}} <small style="color: #888;">({{this.time}})</small></li>
+                {{/each}}
+            </ul>
+        </div>
+        {{/if}}
+        
+        {{#if top_performers}}
+        <div class="card">
+            <h3 class="card-title">En Çok Performans Gösterenler</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sıralama</th>
+                        <th>İsim</th>
+                        <th>Skor</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each top_performers}}
+                    <tr>
+                        <td>{{this.rank}}</td>
+                        <td>{{this.name}}</td>
+                        <td>{{this.score}}</td>
+                        <td>{{this.trend}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        {{/if}}
+        
+        {{#if upcoming_events}}
+        <div class="card">
+            <h3 class="card-title">Yaklaşan Etkinlikler</h3>
+            <ul class="feature-list">
+                {{#each upcoming_events}}
+                <li>{{this.title}} - {{this.date}} <small style="color: #888;">{{this.description}}</small></li>
+                {{/each}}
+            </ul>
+        </div>
+        {{/if}}
+        
+        <a href="{{dashboard_url}}" class="cta-button">Dashboard'u Ziyaret Et</a>
+        
+        <div class="alert alert-success">
+            <strong>Harika hafta!</strong> Dashboard'unuzda kayda değer ilerlemeler var. Devam edin! 🚀
+        </div>
+    </div>
+    
+    <div class="email-footer">
+        <div class="footer-links">
+            <a href="{{dashboard_url}}">Dashboard</a>
+            <a href="{{reports_url}}">Raporlar</a>
+            <a href="{{settings_url}}">Ayarlar</a>
+            <a href="{{unsubscribe_url}}">Ayarlar</a>
+        </div>
+        <div class="footer-text">
+            {{company.name}} © {{currentYear}}<br>
+            Bu özet email'i almak istemiyorsanız <a href="{{unsubscribe_url}}" style="color: #bdc3c7;">ayarlarınızdan değiştirebilirsiniz</a>.
+        </div>
+    </div>
+</div>
+
+<!-- Notification Settings Template -->
+<div class="email-container" id="settings-template" style="display: none;">
+    <div class="email-header">
+        <img src="{{logo.url}}" alt="{{logo.alt}}" class="logo">
+        <h1 class="company-name">{{company.name}}</h1>
+        <p>⚙️ Bildirim Ayarları</p>
+    </div>
+    
+    <div class="email-content">
+        <h2 class="greeting">Merhaba {{user.name}},</h2>
+        
+        <div class="message">
+            Dashboard bildirim ayarlarınızı yönetmek için aşağıdaki seçenekleri kullanabilirsiniz:
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Mevcut Bildirim Tercihleri</h3>
+            <ul class="feature-list">
+                <li><strong>Real-time bildirimler:</strong> {{preferences.realtime_enabled ? 'Aktif' : 'Pasif'}}</li>
+                <li><strong>Günlük özet:</strong> {{preferences.daily_digest_enabled ? 'Aktif' : 'Pasif'}}</li>
+                <li><strong>Haftalık rapor:</strong> {{preferences.weekly_report_enabled ? 'Aktif' : 'Pasif'}}</li>
+                <li><strong>Alert bildirimleri:</strong> {{preferences.alerts_enabled ? 'Aktif' : 'Pasif'}}</li>
+            </ul>
+        </div>
+        
+        <a href="{{settings_url}}" class="cta-button">Bildirim Ayarlarını Güncelle</a>
+        
+        <div class="alert alert-info">
+            <strong>Bilgi:</strong> Bildirim ayarlarınızı istediğiniz zaman değiştirebilirsiniz. Tüm değişiklikler anında geçerli olur.
+        </div>
+    </div>
+    
+    <div class="email-footer">
+        <div class="footer-links">
+            <a href="{{dashboard_url}}">Dashboard</a>
+            <a href="{{support_url}}">Destek</a>
+            <a href="{{profile_url}}">Profil</a>
+        </div>
+        <div class="footer-text">
+            {{company.name}} © {{currentYear}}<br>
+            Bildirim tercihlerinizi gözden geçirmek için hesap ayarlarınızı ziyaret edin.
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

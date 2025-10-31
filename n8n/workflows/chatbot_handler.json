@@ -1,0 +1,468 @@
+{
+  "name": "Chatbot Handler Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "listen-messages",
+        "options": {}
+      },
+      "name": "Webhook - Listen Messages",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "chatbot-handler-listen"
+    },
+    {
+      "parameters": {
+        "resource": "tableRow",
+        "operation": "getAll",
+        "tableName": "chat_history",
+        "sortBy": "created_at",
+        "sortOrder": "desc",
+        "limit": 10,
+        "options": {
+          "filters": {
+            "conditions": [
+              {
+                "field": "status",
+                "operation": "equal",
+                "value": "pending"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Get New Messages",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "Check New Messages",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-5-sonnet-20241022\",\n  \"max_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json[0].message }}\"\n    }\n  ]\n}",
+        "options": {
+          "headers": {
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "X-API-Key",
+                "value": "={{ $env.ANTHROPIC_API_KEY }}"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Claude API - Send Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        220
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Claude API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "tableRow",
+        "operation": "update",
+        "tableName": "chat_history",
+        "rowId": "={{ $json[0].id }}",
+        "fieldsUi": {
+          "field": [
+            {
+              "fieldName": "response",
+              "fieldValue": "={{ $json.content[0].text }}"
+            },
+            {
+              "fieldName": "status",
+              "fieldValue": "completed"
+            },
+            {
+              "fieldName": "updated_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Update Response in Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        220
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.DASHBOARD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"chat_response\",\n  \"message_id\": \"{{ $json[0].id }}\",\n  \"response\": \"{{ $json.content[0].text }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"user_id\": \"{{ $json[0].user_id }}\"\n}",
+        "options": {
+          "headers": {
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Send Dashboard Update",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add-message",
+        "options": {}
+      },
+      "name": "Webhook - Add Message",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        500
+      ],
+      "webhookId": "chatbot-handler-add"
+    },
+    {
+      "parameters": {
+        "resource": "tableRow",
+        "operation": "create",
+        "tableName": "chat_history",
+        "fieldsUi": {
+          "field": [
+            {
+              "fieldName": "user_id",
+              "fieldValue": "={{ $json.user_id || 'anonymous' }}"
+            },
+            {
+              "fieldName": "message",
+              "fieldValue": "={{ $json.message }}"
+            },
+            {
+              "fieldName": "status",
+              "fieldValue": "pending"
+            },
+            {
+              "fieldName": "created_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Save Message to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        460,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.DASHBOARD_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"message_added\",\n  \"message\": \"{{ $json.message }}\",\n  \"timestamp\": \"{{ $json.created_at }}\",\n  \"user_id\": \"{{ $json.user_id }}\"\n}",
+        "options": {
+          "headers": {
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Notify Dashboard - Message Added",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
+            }
+          ],
+          "combinator": "not"
+        }
+      },
+      "name": "Check for Errors",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "tableRow",
+        "operation": "update",
+        "tableName": "chat_history",
+        "rowId": "={{ $json[0].id }}",
+        "fieldsUi": {
+          "field": [
+            {
+              "fieldName": "status",
+              "fieldValue": "error"
+            },
+            {
+              "fieldName": "error_message",
+              "fieldValue": "={{ $json.error }}"
+            },
+            {
+              "fieldName": "updated_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Log Error to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Listen Messages": {
+      "main": [
+        [
+          {
+            "node": "Get New Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get New Messages": {
+      "main": [
+        [
+          {
+            "node": "Check New Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check New Messages": {
+      "main": [
+        [
+          {
+            "node": "Claude API - Send Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Webhook - Add Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Claude API - Send Message": {
+      "main": [
+        [
+          {
+            "node": "Update Response in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Response in Supabase": {
+      "main": [
+        [
+          {
+            "node": "Send Dashboard Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Dashboard Update": {
+      "main": [
+        [
+          {
+            "node": "Check for Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Add Message": {
+      "main": [
+        [
+          {
+            "node": "Save Message to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Message to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Notify Dashboard - Message Added",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Errors": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Log Error to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "chatbot-handler-workflow",
+  "tags": [
+    {
+      "createdAt": "2025-11-01T03:09:05.000Z",
+      "updatedAt": "2025-11-01T03:09:05.000Z",
+      "id": "chatbot",
+      "name": "Chatbot"
+    },
+    {
+      "createdAt": "2025-11-01T03:09:05.000Z",
+      "updatedAt": "2025-11-01T03:09:05.000Z",
+      "id": "supabase",
+      "name": "Supabase"
+    },
+    {
+      "createdAt": "2025-11-01T03:09:05.000Z",
+      "updatedAt": "2025-11-01T03:09:05.000Z",
+      "id": "claude",
+      "name": "Claude AI"
+    }
+  ]
+}

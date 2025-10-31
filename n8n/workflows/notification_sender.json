@@ -1,0 +1,407 @@
+{
+  "name": "Notification Sender Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "select",
+        "table": "notifications",
+        "options": {
+          "where": [
+            {
+              "field": "status",
+              "condition": "eq",
+              "value": "pending"
+            }
+          ],
+          "orderBy": [
+            {
+              "field": "created_at",
+              "direction": "asc"
+            }
+          ]
+        },
+        "additionalFields": {
+          "returnAllItems": false,
+          "maxResults": 50
+        }
+      },
+      "id": "d1234567-1234-1234-1234-123456789012",
+      "name": "Check Pending Notifications",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "expression": "={{ $json.id }}"
+      },
+      "id": "a1234567-1234-1234-1234-123456789012",
+      "name": "Set Notification ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "expression": "={{ $json.subject }}"
+      },
+      "id": "b1234567-1234-1234-1234-123456789012",
+      "name": "Set Email Subject",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        680,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "expression": "={{ $json.message }}"
+      },
+      "id": "c1234567-1234-1234-1234-123456789012",
+      "name": "Set Email Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        680,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "expression": "={{ $json.recipient_email }}"
+      },
+      "id": "d2345678-1234-1234-1234-123456789012",
+      "name": "Set Recipient Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "expression": "={{ $json.telegram_chat_id }}"
+      },
+      "id": "e2345678-1234-1234-1234-123456789012",
+      "name": "Set Telegram Chat ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@botfusions.com",
+        "toEmail": "={{ $json }}",
+        "subject": "={{ $node[\"Set Email Subject\"].json.subject }}",
+        "emailType": "html",
+        "message": "<h3>{{ $node[\"Set Email Subject\"].json.subject }}</h3>\n<div style=\"padding: 20px; background-color: #f5f5f5; border-radius: 10px; margin: 10px 0;\">\n{{ $node[\"Set Email Message\"].json.message }}\n</div>\n<div style=\"margin-top: 20px; color: #666; font-size: 12px;\">\nBotfusions Dashboard - Automated Notification\n</div>",
+        "options": {}
+      },
+      "id": "f3456789-1234-1234-1234-123456789012",
+      "name": "Send Email Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        200
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "smtp_credentials",
+          "name": "SMTP Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json }}",
+        "text": "*🔔 {{ $node[\"Set Email Subject\"].json.subject }}*\n\n{{ $node[\"Set Email Message\"].json.message }}\n\n---\n*Botfusions Dashboard*",
+        "additionalFields": {
+          "parseMode": "Markdown"
+        }
+      },
+      "id": "g4567890-1234-1234-1234-123456789012",
+      "name": "Send Telegram Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram_credentials",
+          "name": "Telegram Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "update",
+        "table": "notifications",
+        "options": {
+          "where": [
+            {
+              "field": "id",
+              "condition": "eq",
+              "value": "={{ $node[\"Set Notification ID\"].json }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "sent"
+            },
+            {
+              "fieldId": "sent_at",
+              "fieldValue": "NOW()"
+            }
+          ]
+        }
+      },
+      "id": "h5678901-1234-1234-1234-123456789012",
+      "name": "Update Status - Sent",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "update",
+        "table": "notifications",
+        "options": {
+          "where": [
+            {
+              "field": "id",
+              "condition": "eq",
+              "value": "={{ $node[\"Set Notification ID\"].json }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "failed"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json.error }}"
+            },
+            {
+              "fieldId": "failed_at",
+              "fieldValue": "NOW()"
+            }
+          ]
+        }
+      },
+      "id": "i6789012-1234-1234-1234-123456789012",
+      "name": "Update Status - Failed",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        500
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase_credentials",
+          "name": "Supabase Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.error }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "isEmpty"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              "id": "j7890123-1234-1234-1234-123456789012",
+              "name": "Check Success",
+              "type": "n8n-nodes-base.if",
+              "typeVersion": 2,
+              "position": [
+                1120,
+                300
+              ]
+            }
+          ],
+          "connections": {
+            "Check Pending Notifications": {
+              "main": [
+                [
+                  {
+                    "node": "Set Notification ID",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Set Notification ID": {
+              "main": [
+                [
+                  {
+                    "node": "Set Email Subject",
+                    "type": "main",
+                    "index": 0
+                  },
+                  {
+                    "node": "Set Email Message",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Set Email Subject": {
+              "main": [
+                [
+                  {
+                    "node": "Set Recipient Email",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Set Email Message": {
+              "main": [
+                [
+                  {
+                    "node": "Set Recipient Email",
+                    "type": "main",
+                    "index": 0
+                  },
+                  {
+                    "node": "Set Telegram Chat ID",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Set Recipient Email": {
+              "main": [
+                [
+                  {
+                    "node": "Send Email Notification",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Set Telegram Chat ID": {
+              "main": [
+                [
+                  {
+                    "node": "Send Telegram Notification",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Send Email Notification": {
+              "main": [
+                [
+                  {
+                    "node": "Check Success",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Send Telegram Notification": {
+              "main": [
+                [
+                  {
+                    "node": "Check Success",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Check Success": {
+              "main": [
+                [
+                  {
+                    "node": "Update Status - Sent",
+                    "type": "main",
+                    "index": 0
+                  }
+                ],
+                [
+                  {
+                    "node": "Update Status - Failed",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            }
+          },
+          "settings": {
+            "executionOrder": "v1"
+          },
+          "staticData": {},
+          "tags": [],
+          "triggerCount": 0,
+          "updatedAt": "2025-11-01T03:09:05.000Z",
+          "versionId": "1"
+        }
