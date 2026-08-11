@@ -28,7 +28,7 @@ Bu workflow Botfusions Dashboard için rakip firmaların web sitelerini izleyere
 #### Supabase Credentials
 1. Workflow'da "Botfusions Supabase" credential'ını düzenleyin:
    - **Host**: `qlcbobvbircjhlglhfhr.supabase.co`
-   - **ANON Key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MzM5NjgsImV4cCI6MjA3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE`
+       - **ANON Key**: `<supabase dashboard > Project Settings > API` adresinden alin
    - **Service Role Key**: Supabase dashboard'tan alın (gerekirse)
 
 #### SMTP Credentials

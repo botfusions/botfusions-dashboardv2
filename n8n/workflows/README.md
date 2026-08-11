@@ -33,7 +33,7 @@ Veya N8N UI üzerinden:
 3. Aşağıdaki bilgileri gir:
    ```
    URL: https://qlcbobvbircjhlglhfhr.supabase.co
-   ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY2JvYnZiaXJjamhsZ2xoZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MzM5NjgsImV4cCI6MjA3NzMwOTk2OH0.jXK8NBYMGgYgUFGCTAvpi5q-3SJ5UQLHhOerRXr3FzE
+       ANON_KEY: <supabase dashboard'dan alin>
    ```
 
 #### Claude API Credentials

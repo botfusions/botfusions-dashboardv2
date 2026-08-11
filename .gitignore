@@ -918,3 +918,10 @@
 # uploads/
 # downloads/
 
+# Claude Code local configs
+.claude/
+# n8n credentials - asla commit edilmez
+n8n/supabase_credentials.json
+n8n/credentials/
+.env.*
+!.env.example
